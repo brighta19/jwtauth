@@ -20,7 +20,7 @@
         "arrow-spacing": "off",
         "block-scoped-var": "error",
         "block-spacing": "error",
-        "brace-style": "error",
+        "brace-style": ["error", "stroustrup"],
         "camelcase": "error",
         "capitalized-comments": "error",
         "class-methods-use-this": "error",

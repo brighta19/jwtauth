@@ -35,7 +35,7 @@ const verifyUserLogin = async (email, password) => {
         }
         if (await bcrypt.compare(password, user.password)) {
             // eslint-disable-next-line no-underscore-dangle
-            const token = jwt.sign({ id: user._id, username: user.email, type: "user" }, JWT_SECRET, {expiresIn: "2h"});
+            const token = jwt.sign({ id: user._id, email: user.email, type: "user" }, JWT_SECRET, { expiresIn: "2h" });
             return { status: "ok", data: token };
         }
         return { status: "error", error: "Invalid password" };
@@ -43,6 +43,17 @@ const verifyUserLogin = async (email, password) => {
     catch (error) {
         console.log(error);
         return { status: "error", error: "Timed out" };
+    }
+};
+
+const verifyToken = (token) => {
+    try {
+        const verify = jwt.verify(token, JWT_SECRET);
+        return verify.type === "user";
+    }
+    catch (error) {
+        console.log(JSON.stringify(error), "error");
+        return false;
     }
 };
 
@@ -68,7 +79,7 @@ app.post("/login", async (req, res) => {
 
     const response = await verifyUserLogin(email, password);
     if (response.status === "ok") {
-        res.cookie("token", response.token, { maxAge: COOKIE_MAX_AGE, httpOnly: true });
+        res.cookie("token", response.data, { maxAge: COOKIE_MAX_AGE, httpOnly: true });
         res.redirect("/");
     }
     else {
@@ -77,7 +88,21 @@ app.post("/login", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    res.render("home");
+    const { token } = req.cookies;
+    if (verifyToken(token)) {
+        res.render("home");
+    }
+    else {
+        res.redirect("/login");
+    }
+});
+
+app.get("/login", (req, res) => {
+    res.render("signin");
+});
+
+app.get("/signup", (req, res) => {
+    res.render("signup");
 });
 
 app.listen(PORT, () => {

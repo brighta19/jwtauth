@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 const DUPLICATE_ERROR_CODE = 11000;
+// 2 hours in milliseconds
+const COOKIE_MAX_AGE = 7200000;
 const { PORT, JWT_SECRET, MONGODB_URL } = process.env;
 const app = express();
 const salt = 10;
@@ -25,6 +27,25 @@ const userSchema = new mongoose.Schema({
 }, { collection: "users" });
 const User = mongoose.model("User", userSchema);
 
+const verifyUserLogin = async (email, password) => {
+    try {
+        const user = await User.findOne({ email }).lean();
+        if (!user) {
+            return { status: "error", error: "User not found" };
+        }
+        if (await bcrypt.compare(password, user.password)) {
+            // eslint-disable-next-line no-underscore-dangle
+            const token = jwt.sign({ id: user._id, username: user.email, type: "user" }, JWT_SECRET, {expiresIn: "2h"});
+            return { status: "ok", data: token };
+        }
+        return { status: "error", error: "Invalid password" };
+    }
+    catch (error) {
+        console.log(error);
+        return { status: "error", error: "Timed out" };
+    }
+};
+
 app.post("/signup", async (req, res) => {
     const { email, password: plainTextpassword } = req.body;
     const password = await bcrypt.hash(plainTextpassword, salt);
@@ -42,9 +63,22 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-app.get("/",(req, res)=>{
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    const response = await verifyUserLogin(email, password);
+    if (response.status === "ok") {
+        res.cookie("token", response.token, { maxAge: COOKIE_MAX_AGE, httpOnly: true });
+        res.redirect("/");
+    }
+    else {
+        res.json(response);
+    }
+});
+
+app.get("/", (req, res) => {
     res.render("home");
-})
+});
 
 app.listen(PORT, () => {
     console.log(`Running on port ${PORT}`);

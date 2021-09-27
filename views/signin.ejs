@@ -6,21 +6,31 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - JWT Auth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <form action="/login" method="post">
-        <label for="">Email</label>
-        <input type="email" name="email" id="">
-        <label for="">Password</label>
-        <input type="password" name="password" id="">
-        <button type="submit">Sign in</button>
-    </form>
-    <form action="/signup" method="get">
-        <button type="submit">
-            Do not have an account
-        </button>
-    </form>
+    <div class="center">
+        <h1>JWT Auth</h1>
+
+        <form action="/signin" method="post">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" required>
+
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required>
+
+            <button type="submit" id="signin" class="dark">Sign in</button>
+        </form>
+        <form action="/signup" method="get">
+            <button type="submit">
+                Sign up for an account
+            </button>
+        </form>
+    </div>
 </body>
 
 </html>

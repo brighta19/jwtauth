@@ -22,6 +22,7 @@ mongoose.connect(MONGODB_URL, {useNewUrlParser: true, useUnifiedTopology: true})
 
 
 const userSchema = new mongoose.Schema({
+    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true }
 }, { collection: "users" });
@@ -35,7 +36,7 @@ const verifyUserLogin = async (email, password) => {
         }
         if (await bcrypt.compare(password, user.password)) {
             // eslint-disable-next-line no-underscore-dangle
-            const token = jwt.sign({ id: user._id, email: user.email, type: "user" }, JWT_SECRET, { expiresIn: "2h" });
+            const token = jwt.sign({ id: user._id, name: user.name, email: user.email, type: "user" }, JWT_SECRET, { expiresIn: "2h" });
             return { status: "ok", data: token };
         }
         return { status: "error", error: "Invalid password" };
@@ -58,11 +59,11 @@ const verifyToken = (token) => {
 };
 
 app.post("/signup", async (req, res) => {
-    const { email, password: plainTextpassword } = req.body;
+    const { name, email, password: plainTextpassword } = req.body;
     const password = await bcrypt.hash(plainTextpassword, salt);
 
     try {
-        await User.create({ email, password });
+        await User.create({ name, email, password });
         return res.redirect("/");
     }
     catch (error) {
@@ -74,7 +75,7 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/signin", async (req, res) => {
     const { email, password } = req.body;
 
     const response = await verifyUserLogin(email, password);
@@ -87,17 +88,18 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
     const { token } = req.cookies;
     if (verifyToken(token)) {
-        res.render("home");
+        const props = await jwt.decode(token);
+        res.render("home", { name: props.name });
     }
     else {
-        res.redirect("/login");
+        res.redirect("/signin");
     }
 });
 
-app.get("/login", (req, res) => {
+app.get("/signin", (req, res) => {
     res.render("signin");
 });
 
